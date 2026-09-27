@@ -90,12 +90,13 @@ Números são normalizados removendo caracteres não numéricos e devem ser info
 
 ## Deploy no Render
 
-1. Crie um **PostgreSQL** no Render e copie a *Internal Database URL* como `DATABASE_URL` nos dois serviços.
-2. Crie um Redis gerenciado compatível (por exemplo Render Key Value, Upstash ou Redis Cloud) e defina sua URL TLS/Redis como `REDIS_URL` nos dois serviços.
-3. Crie dois serviços a partir deste repositório com runtime **Docker**: um **Web Service** com comando `sh -c "node dist/db/migrate.js && node dist/server.js"`, e um **Background Worker** com `sh -c "node dist/db/migrate.js && node dist/workers/verification.worker.js"`.
-4. Defina `NODE_ENV=production`, uma mesma `API_KEY` forte e as variáveis acima nos dois serviços. Configure `/health` como health check do Web Service.
-5. Anexe um disco persistente ao worker e defina `WHATSAPP_AUTH_PATH` para um caminho dentro dele (por exemplo `/var/data/.wwebjs_auth`). Sem disco, cada novo deploy exigirá leitura do QR code novamente.
-6. Mantenha somente uma réplica do worker por sessão de WhatsApp, pois `LocalAuth` e o navegador Chromium não devem ser usados simultaneamente por vários processos. Para escalar, isole cada sessão/tenant em um worker e diretório persistente próprios.
+1. No painel Render, clique em **New + → PostgreSQL** para criar o banco. Em **Connect**, copie a *Internal Database URL* e use-a como `DATABASE_URL` somente nos serviços API e worker hospedados no Render.
+2. Para Redis, crie um serviço Redis/Key Value no Render ou uma base no Upstash/Redis Cloud. Copie a URL de conexão (de preferência `rediss://...`) e defina-a como `REDIS_URL` nos dois serviços.
+3. Se a API HTTP estiver na Vercel, ela não consegue usar URLs **Internal** do Render. Na Vercel, use uma URL externa habilitada do PostgreSQL e um Redis externo acessível por TLS (por exemplo Upstash).
+4. Crie dois serviços a partir deste repositório com runtime **Docker**: um **Web Service** com comando `sh -c "node dist/db/migrate.js && node dist/server.js"`, e um **Background Worker** com `sh -c "node dist/db/migrate.js && node dist/workers/verification.worker.js"`.
+5. Defina `NODE_ENV=production`, uma mesma `API_KEY` forte e as variáveis acima nos dois serviços. Configure `/health` como health check do Web Service.
+6. Anexe um disco persistente ao worker e defina `WHATSAPP_AUTH_PATH` para um caminho dentro dele (por exemplo `/var/data/.wwebjs_auth`). Sem disco, cada novo deploy exigirá leitura do QR code novamente.
+7. Mantenha somente uma réplica do worker por sessão de WhatsApp, pois `LocalAuth` e o navegador Chromium não devem ser usados simultaneamente por vários processos. Para escalar, isole cada sessão/tenant em um worker e diretório persistente próprios.
 
 O `Dockerfile` instala Chromium e define `PUPPETEER_EXECUTABLE_PATH`, necessário para execução no container. O arquivo `render.yaml` é um ponto de partida para API e worker; configure nele ou no painel a URL do seu Redis gerenciado antes do primeiro deploy.
 
@@ -135,8 +136,8 @@ A Vercel é adequada para hospedar a página inicial/documentação e a camada H
 
 | Nome | Valor a inserir na Vercel |
 | --- | --- |
-| `DATABASE_URL` | A URL completa do PostgreSQL partilhado com o Render, por exemplo `postgresql://USER:SENHA@HOST:5432/BANCO`. No Render, copie a **Internal Database URL**. |
-| `REDIS_URL` | A URL completa do Redis partilhado com o worker, por exemplo `rediss://default:SENHA@HOST:PORT`. |
+| `DATABASE_URL` | A URL **externa** completa do PostgreSQL, por exemplo `postgresql://USER:SENHA@HOST:5432/BANCO`. A Vercel não alcança a *Internal Database URL* do Render. |
+| `REDIS_URL` | A URL externa TLS do Redis, por exemplo `rediss://default:SENHA@HOST:PORT`. Upstash é uma opção prática para a Vercel. |
 | `API_KEY` | Uma chave secreta de 16 ou mais caracteres. Gere-a com `openssl rand -hex 32` e use exatamente a mesma no serviço API e no worker. |
 | `MAX_BATCH_SIZE` | `500` para o padrão, ou um número entre `1` e `5000`. |
 

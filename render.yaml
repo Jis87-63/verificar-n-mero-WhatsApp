@@ -10,26 +10,36 @@ services:
       - key: DATABASE_URL
         fromDatabase: { name: whatsapp-verifier-db, property: connectionString }
       - key: REDIS_URL
-        fromService: { type: redis, name: whatsapp-verifier-redis, property: connectionString }
+        fromService: { type: keyvalue, name: whatsapp-verifier-redis, property: connectionString }
       - key: API_KEY
         generateValue: true
-  - type: redis
+      - key: MAX_BATCH_SIZE
+        value: "500"
+  - type: keyvalue
     name: whatsapp-verifier-redis
-    plan: free
+    plan: starter
     ipAllowList: []
   - type: worker
     name: whatsapp-verifier-worker
     runtime: docker
     dockerCommand: sh -c "node dist/db/migrate.js && node dist/workers/verification.worker.js"
+    disk:
+      name: whatsapp-session
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         fromDatabase: { name: whatsapp-verifier-db, property: connectionString }
       - key: REDIS_URL
-        fromService: { type: redis, name: whatsapp-verifier-redis, property: connectionString }
+        fromService: { type: keyvalue, name: whatsapp-verifier-redis, property: connectionString }
       - key: API_KEY
         sync: false
+      - key: WHATSAPP_AUTH_PATH
+        value: /var/data/.wwebjs_auth
+      - key: MAX_BATCH_SIZE
+        value: "500"
 databases:
   - name: whatsapp-verifier-db
     plan: basic-256mb

@@ -1,5 +1,5 @@
 import express from 'express';
-import helmet from 'helmet';
+import { helmet } from 'helmet';
 import cors from 'cors';
 import { env } from './config/env.js';
 import api from './routes/api.js';

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Verifier — Estado e documentação</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main>
+    <header><p class="eyebrow">WHATSAPP NUMBER VERIFIER</p><h1>API operacional e pronta para integrar</h1><p class="lead">Consulte o estado do serviço e copie os exemplos para utilizar a API no seu outro site.</p></header>
+    <section class="status-card" aria-live="polite"><div class="indicator" id="indicator"></div><div><p class="label">ESTADO DO SERVIÇO</p><strong id="service-status">A verificar…</strong><p id="status-detail">A consultar <code>/api/health</code></p></div><button id="refresh" type="button">Atualizar</button></section>
+    <section class="notice"><strong>Importante:</strong> o site pode chamar esta API diretamente somente se o domínio estiver listado em <code>CORS_ORIGINS</code>. Nunca exponha a sua <code>API_KEY</code no JavaScript público; faça chamadas autenticadas pelo backend do seu site.</section>
+    <section><h2>Início rápido</h2><ol><li>Leia o QR em <code>POST /api/v1/auth/session</code> e aguarde o estado <code>ready</code>.</li><li>Envie os números para a fila e guarde o <code>jobId</code>.</li><li>Consulte o progresso e, após concluir, os resultados.</li></ol></section>
+    <section><h2>Endpoints</h2><div class="endpoint"><span class="method post">POST</span><code>/api/v1/auth/session</code><p>Estado da sessão e QR code base64.</p></div><div class="endpoint"><span class="method post">POST</span><code>/api/v1/verify/batch</code><p>Envia <code>{"numbers":["5511999999999"]}</code> e retorna <code>202</code> com <code>jobId</code>.</p></div><div class="endpoint"><span class="method get">GET</span><code>/api/v1/verify/status/:jobId</code><p>Estado, contadores e progresso percentual.</p></div><div class="endpoint"><span class="method get">GET</span><code>/api/v1/verify/results/:jobId</code><p>Relatório dos números verificados.</p></div></section>
+    <section><h2>Exemplo seguro — backend do seu site</h2><pre><code>const response = await fetch('https://SUA-API/api/v1/verify/batch', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-api-key': process.env.WHATSAPP_API_KEY },
+  body: JSON.stringify({ numbers: ['5511999999999'] })
+});
+const { jobId } = await response.json();</code></pre></section>
+    <footer>Use apenas números que tem autorização para consultar e respeite os termos do WhatsApp.</footer>
+  </main><script src="/app.js"></script>
+</body>
+</html>
